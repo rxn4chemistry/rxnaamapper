@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+"""Convert the checkpoint from pytorch lightning to a compatible huggingface checkpoint"""
+import json
+
+import click
+
+from rxn_aa_mapper.tokenization import EnzymaticReactionBertTokenizer
+from rxn_aa_mapper.training import checkpoint_to_module
+
+tokenizer = EnzymaticReactionBertTokenizer(
+    vocabulary_file="./examples/vocabulary_token_75K_min_600_max_750_500K.txt",
+    aa_sequence_tokenizer_filepath="./examples/token_75K_min_600_max_750_500K.json",
+)
+
+
+@click.command()
+@click.argument("input_checkpoint", type=click.Path(exists=True))
+@click.argument("output_save_path", type=click.Path())
+@click.argument("vocabulary_file", type=click.Path(exists=True))
+@click.argument("config_file", type=click.Path(exists=True))
+@click.argument("aa_sequence_tokenizer_filepath", type=click.Path(exists=True))
+def main(
+    input_checkpoint: str,
+    output_save_path: str,
+    vocabulary_file: str,
+    config_file: str,
+    aa_sequence_tokenizer_filepath: str,
+) -> None:
+    with open(config_file) as fp:
+        config = json.load(fp)
+    model_args = config["model"]
+    model_architecture = model_args.get("architecture", {})
+    del model_args["architecture"]
+    tokenizer = EnzymaticReactionBertTokenizer(
+        vocabulary_file=vocabulary_file,
+        aa_sequence_tokenizer_filepath=aa_sequence_tokenizer_filepath,
+    )
+    model_architecture["vocab_size"] = tokenizer.vocab_size
+    module = checkpoint_to_module(
+        input_checkpoint=input_checkpoint,
+        model_args=model_args,
+        model_architecture=model_architecture,
+    )
+    module.model.save_pretrained(output_save_path)
+
+
+if __name__ == "__main__":
+    main()

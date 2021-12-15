@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+"""
+Create a vocabulary for an enzymatic reaction tokenizer using AA sequences.
+
+Create a vocabulary starting from a folder containing .csv following this format:
+NC(=O)c1ccc[n+]([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C@@H](n4cnc5c(N)ncnc54)[C@H](O)[C@@H]3O)[C@@H](O)[C@H]2O)c1.O=C([O-])CC(C(=O)[O-])C(O)C(=O)[O-]|AGGVKTVTLIPGDGIGPEISAAVMKIFDAAKAPIQANVRPCVSIEGYKFNEMYLDTVCLNIETACFATIKCSDFTEEICREVAENCKDIK>>O=C([O-])CCC(=O)C(=O)[O-],1.1.1.41,brenda_reaction_smiles+UniProt
+NC(=O)c1ccc[n+]([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C@@H](n4cnc5c(N)ncnc54)[C@H](O)[C@@H]3O)[C@@H](O)[C@H]2O)c1.O=C([O-])CC(C(=O)[O-])C(O)C(=O)[O-]|AGSPPLAGEGPGERSYRSPILTLRRHFDLYANLRPTVQLVPGGRSVDLLIVRENTEGLYSGRERREGDTAIAERVITRRASERIARVACEQARQRIADWRLRNADSISATRNPKSEIRNPKLTIVHKANVLKVTDGLFRESCLAVAAEYPDVAVQEMLVDAAAMWLVKDPRRFDVIVTTNLFGDILSDLAAGLVGGLGVAPSANVGAGRVAVCEPVHGSAPDIAGRGIANPVGAILSAAMLLDHLGEGQSATRVRHAVAATLAAGIATPDLGGTATTAQVTDAICQWLA>>O=C([O-])CCC(=O)C(=O)[O-],1.1.1.41,brenda_reaction_smiles+UniProt
+NC(=O)c1ccc[n+]([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C@@H](n4cnc5c(N)ncnc54)[C@H](O)[C@@H]3O)[C@@H](O)[C@H]2O)c1.O=C([O-])CC(C(=O)[O-])C(O)C(=O)[O-]|AIEVQTVTLIPGD>>O=C([O-])CCC(=O)C(=O)[O-],1.1.1.41,brenda_reaction_smiles+UniProt
+"""
+
+
+import fnmatch
+import os
+from collections import Counter
+
+import click
+from loguru import logger
+from tqdm import tqdm
+
+from rxn_aa_mapper.tokenization import EnzymaticReactionTokenizer
+
+
+@click.command()
+@click.argument("input_path", type=click.Path(exists=True))
+@click.argument("aa_sequence_tokenizer_filepath", type=click.Path(exists=True))
+@click.argument("output_filepath", type=click.Path())
+@click.argument("pattern", type=str)
+def main(
+    input_path: str,
+    aa_sequence_tokenizer_filepath: str,
+    output_filepath: str,
+    pattern: str,
+) -> None:
+    """Create a vocabulary using an EnzymaticReactionTokenizer."""
+
+    logger.info(
+        "creating a vocabulary for an enzymatic reaction tokenizer using AA sequences..."
+    )
+
+    vocabulary_counter = Counter()
+    logger.info(
+        f"creating enzymatic reaction tokenizer using AA sequence tokenizer: {aa_sequence_tokenizer_filepath}"
+    )
+    tokenizer = EnzymaticReactionTokenizer(
+        aa_sequence_tokenizer_filepath=aa_sequence_tokenizer_filepath
+    )
+
+    aa_reaction_smiles_filepaths = [
+        os.path.join(input_path, entry)
+        for entry in os.listdir(input_path)
+        if fnmatch.fnmatch(entry, pattern)
+    ]
+    logger.info(f"using {len(aa_reaction_smiles_filepaths)} reaction smiles files...")
+
+    for filepath in tqdm(aa_reaction_smiles_filepaths):
+        logger.info(f"parsing enzymatic reaction from {filepath}...")
+        with open(filepath, "rt") as fp:
+            for line in tqdm(fp):
+                vocabulary_counter.update(
+                    tokenizer.tokenize(line.strip().split(",")[0])
+                )
+        logger.info(f"completed parsing enzymatic reaction from {filepath}")
+
+    # special tokens for the model training and keeping the possibility to extend the vocabulart
+    special_tokens = [
+        "[PAD]",
+        "[unused1]",
+        "[unused2]",
+        "[unused3]",
+        "[unused4]",
+        "[unused5]",
+        "[unused6]",
+        "[unused7]",
+        "[unused8]",
+        "[unused9]",
+        "[unused10]",
+        "[UNK]",
+        "[CLS]",
+        "[SEP]",
+        "[MASK]",
+    ]
+
+    logger.info(f"saving vocabulary to {output_filepath}")
+    with open(output_filepath, "wt") as fp:
+        tokens = special_tokens + [
+            token for token, _ in vocabulary_counter.most_common()
+        ]
+        fp.write(os.linesep.join(tokens))
+
+
+if __name__ == "__main__":
+    main()

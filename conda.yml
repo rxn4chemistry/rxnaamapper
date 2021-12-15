@@ -1,0 +1,9 @@
+name: rxn_aa_mapper
+dependencies:
+  - python>=3.7,<3.8
+  - pip>=19.1,<20.3
+  - pip:
+    - -r file:requirements.txt
+    # development
+    - -r file:dev_requirements.txt
+    - -e .
