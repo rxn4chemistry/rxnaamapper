@@ -58,6 +58,7 @@ checkpoint-to-hf-model /path/to/model.ckpt /tmp/rxnaamapper-pretrained-model ./e
 
 The trained model can used to map reactant atoms to AA sequence locations that potentially represent the active site.
 
+
 ```python
 from rxn_aa_mapper.aa_mapper import RXNAAMapper
 
@@ -72,6 +73,7 @@ config_mapper = {
 mapper = RXNAAMapper(config=config_mapper)
 mapper.get_reactant_aa_sequence_attention_guided_maps(["NC(=O)c1ccc[n+]([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C@@H](n4cnc5c(N)ncnc54)[C@H](O)[C@@H]3O)[C@@H](O)[C@H]2O)c1.O=C([O-])CC(C(=O)[O-])C(O)C(=O)[O-]|AGGVKTVTLIPGDGIGPEISAAVMKIFDAAKAPIQANVRPCVSIEGYKFNEMYLDTVCLNIETACFATIKCSDFTEEICREVAENCKDIK>>O=C([O-])CCC(=O)C(=O)[O-]"])
 ```
+Nb: The model path contains both the model and the config.json files. The files in this folder result from the model train turned into an HuggingFace model using the script from the previous section.
 
 ## citation
 
