@@ -35,6 +35,13 @@ tokenizer.tokenize("NC(=O)c1ccc[n+]([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C
 
 ## train the model
 
+wandb con be control with environment variables set before the script runs or within the script. 
+```console
+export WANDB_MODE=offline
+```
+
+When you're running a script in an automated environment, you can control wandb with environment variables set before the script runs or within the script.
+
 The [`mlm-trainer`](./bin/mlm-trainer) script can be used to train a model via MTL:
 
 ```console
@@ -73,7 +80,7 @@ config_mapper = {
 mapper = RXNAAMapper(config=config_mapper)
 mapper.get_reactant_aa_sequence_attention_guided_maps(["NC(=O)c1ccc[n+]([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C@@H](n4cnc5c(N)ncnc54)[C@H](O)[C@@H]3O)[C@@H](O)[C@H]2O)c1.O=C([O-])CC(C(=O)[O-])C(O)C(=O)[O-]|AGGVKTVTLIPGDGIGPEISAAVMKIFDAAKAPIQANVRPCVSIEGYKFNEMYLDTVCLNIETACFATIKCSDFTEEICREVAENCKDIK>>O=C([O-])CCC(=O)C(=O)[O-]"])
 ```
-Nb: The model path contains both the model and the config.json files. The files in this folder result from the model train turned into an HuggingFace model using the script from the previous section.
+*NOTE:* The model path contains both the model binary file and the config.json. The files in this folder are generated from the model trained turned into an HuggingFace model using the script from the previous section.
 
 ## citation
 
