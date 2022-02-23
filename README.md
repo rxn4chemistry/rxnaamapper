@@ -35,7 +35,7 @@ tokenizer.tokenize("NC(=O)c1ccc[n+]([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C
 
 ## train the model
 
-wandb con be control with environment variables set before the script runs or within the script. 
+wandb can be controlled with environment variables set before the script runs or within the script. 
 ```console
 export WANDB_MODE=offline
 ```
