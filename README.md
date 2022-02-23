@@ -40,7 +40,7 @@ We use WandB for logging, if you don't have a mode configured you can simply dis
 export WANDB_MODE=offline
 ```
 
-When you're running a script in an automated environment, you can control wandb with environment variables set before the script runs or within the script.
+Besides using an env variable, you can even create a custom script configuring the logging within it.
 
 The [`mlm-trainer`](./bin/mlm-trainer) script can be used to train a model via MTL:
 
