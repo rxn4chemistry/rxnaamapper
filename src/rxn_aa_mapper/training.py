@@ -56,6 +56,7 @@ def train(
     data_module = get_data_module(dataset_args)
     model_architecture["vocab_size"] = data_module.train_dataset.tokenizer.vocab_size
     model = EnzymaticReactionLightningModule(model_args, model_architecture)
+    model.model.resize_token_embeddings(model_architecture["vocab_size"])
 
     log_dir = trainer_args["log_dir"]
     os.makedirs(log_dir, exist_ok=True)
