@@ -15,7 +15,7 @@ from tqdm import tqdm
 from transformers import DataCollatorForLanguageModeling
 
 from .collator import NGramDataCollatorForLanguageModeling
-from .tokenization import EnzymaticReactionBertTokenizer
+from .tokenization import MLMEnzymaticReactionTokenizer
 
 
 class EnzymaticReactionDataset(IterableDataset):
@@ -38,9 +38,13 @@ class EnzymaticReactionDataset(IterableDataset):
         aa_sequence_tokenizer_filepath = dataset_args.get(
             "aa_sequence_tokenizer_filepath", None
         )
-        self.tokenizer = EnzymaticReactionBertTokenizer(
+        self.from_albert = dataset_args.get("from_albert", False)
+        self.from_bert = dataset_args.get("from_bert", False)
+        self.tokenizer = MLMEnzymaticReactionTokenizer(
             dataset_args["vocabulary_file"],
             aa_sequence_tokenizer_filepath,
+            from_bert=self.from_bert,
+            from_albert=self.from_albert,
         )
 
         if stage == "train":
@@ -131,6 +135,18 @@ class EnzymaticReactionDataset(IterableDataset):
         Returns:
             an iterator on a dataframe
         """
+
+        return self.iterator_and_filepath(
+            pd.read_csv(
+                filepath,
+                names=self.column_names,
+                header=None,
+                chunksize=self.dataset_args["chunk_size"],
+                engine="python",
+            ),
+            filepath,
+        )
+
         try:
             return self.iterator_and_filepath(
                 pd.read_csv(
@@ -195,7 +211,7 @@ class EnzymaticReactionDataset(IterableDataset):
     def filter_tokenized_reactions_by_length(
         cls,
         data: pd.DataFrame,
-        tokenizer: EnzymaticReactionBertTokenizer,
+        tokenizer: MLMEnzymaticReactionTokenizer,
         max_length_token: int,
     ) -> pd.DataFrame:
         """Filter rtokenized reactions by length.
@@ -220,7 +236,7 @@ class EnzymaticReactionDataset(IterableDataset):
     @classmethod
     def filter_and_save_tokenized_reactions_by_length(
         cls,
-        tokenizer: EnzymaticReactionBertTokenizer,
+        tokenizer: MLMEnzymaticReactionTokenizer,
         input_folder: str,
         output_folder: str,
         max_length_token: int = 512,

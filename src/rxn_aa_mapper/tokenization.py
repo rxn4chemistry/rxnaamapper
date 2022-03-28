@@ -5,7 +5,7 @@ import re
 from typing import Callable, List, Optional
 
 from tokenizers import Tokenizer
-from transformers import BertTokenizer
+from transformers import AlbertTokenizer, BertTokenizer
 
 SMILES_TOKENIZER_PATTERN = r"(\%\([0-9]{3}\)|\[[^\]]+]|Br?|Cl?|N|O|S|P|F|I|b|c|n|o|s|p|\||\(|\)|\.|=|#|-|\+|\\|\/|:|~|@|\?|>>?|\*|\$|\%[0-9]{2}|[0-9])"
 
@@ -40,7 +40,12 @@ class RegexTokenizer:
 class AASequenceTokenizer:
     """Run AA sequence tokenization."""
 
-    def __init__(self, tokenizer_filepath: str) -> None:
+    def __init__(
+        self,
+        tokenizer_filepath: str,
+        from_bert: Optional[bool] = False,
+        from_albert: Optional[bool] = False,
+    ) -> None:
         """
         Constructs an AASequenceTokenizer.
 
@@ -48,7 +53,19 @@ class AASequenceTokenizer:
             tokenizer_filepath: path to a serialized AA sequence tokenizer.
         """
         self.tokenizer_filepath = tokenizer_filepath
-        self.tokenizer = Tokenizer.from_file(tokenizer_filepath)
+        self.from_bert = from_bert
+        self.from_albert = from_albert
+
+        if from_bert:
+            self.tokenizer = BertTokenizer.from_pretrained(
+                tokenizer_filepath, do_lower_case=False
+            )
+        elif from_albert:
+            self.tokenizer = AlbertTokenizer.from_pretrained(
+                tokenizer_filepath, do_lower_case=False
+            )
+        else:
+            self.tokenizer = Tokenizer.from_file(tokenizer_filepath)
 
     def tokenize(self, text: str) -> List[str]:
         """Tokenization of a property.
@@ -59,7 +76,10 @@ class AASequenceTokenizer:
         Returns:
             extracted tokens.
         """
-        return self.tokenizer.encode(text).tokens
+        if self.from_albert or self.from_bert:
+            return self.tokenizer.tokenize(" ".join(list(text)))
+        else:
+            return self.tokenizer.encode(text).tokens
 
 
 class EnzymaticReactionTokenizer:
@@ -70,6 +90,8 @@ class EnzymaticReactionTokenizer:
         aa_sequence_tokenizer_filepath: Optional[str] = None,
         smiles_aa_sequence_separator: str = "|",
         reaction_separator: str = ">>",
+        from_bert: Optional[bool] = False,
+        from_albert: Optional[bool] = False,
     ) -> None:
         """Constructs an EnzymaticReactionTokenizer.
 
@@ -79,6 +101,9 @@ class EnzymaticReactionTokenizer:
             reaction_separator: reaction sides separator. Defaults to ">>".
         """
         # define tokenization utilities
+        self.from_bert = from_bert
+        self.from_albert = from_albert
+
         self.smiles_tokenizer = RegexTokenizer(
             regex_pattern=SMILES_TOKENIZER_PATTERN, suffix="_"
         )
@@ -125,14 +150,16 @@ class EnzymaticReactionTokenizer:
         """
         if self.aa_sequence_tokenizer_filepath is not None:
             fn = AASequenceTokenizer(
-                tokenizer_filepath=self.aa_sequence_tokenizer_filepath
+                tokenizer_filepath=self.aa_sequence_tokenizer_filepath,
+                from_albert=self.from_albert,
+                from_bert=self.from_bert,
             ).tokenize
             return fn
         else:
             return list
 
 
-class EnzymaticReactionBertTokenizer(BertTokenizer):
+class MLMEnzymaticReactionTokenizer(BertTokenizer):
     """
     Constructs a EnzymaticReactionBertTokenizer.
     Adapted from https://github.com/huggingface/transformers
@@ -152,6 +179,8 @@ class EnzymaticReactionBertTokenizer(BertTokenizer):
         mask_token: str = "[MASK]",
         smiles_aa_sequence_separator: str = "|",
         reaction_separator: str = ">>",
+        from_bert: Optional[bool] = False,
+        from_albert: Optional[bool] = False,
         **kwargs,
     ) -> None:
         """Constructs an ExpressionTokenizer.
@@ -183,6 +212,8 @@ class EnzymaticReactionBertTokenizer(BertTokenizer):
             aa_sequence_tokenizer_filepath=aa_sequence_tokenizer_filepath,
             smiles_aa_sequence_separator=smiles_aa_sequence_separator,
             reaction_separator=reaction_separator,
+            from_bert=from_bert,
+            from_albert=from_albert,
         )
 
     @property

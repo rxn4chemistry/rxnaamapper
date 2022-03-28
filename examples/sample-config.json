@@ -21,7 +21,7 @@
     },
     "trainer" : {
         "val_check_interval" : 1, 
-        "max_steps" : 50,
+        "max_steps" : 10,
         "gpus" : -1,
         "accelerator": "ddp",
         "accumulate_grad_batches" : 1,

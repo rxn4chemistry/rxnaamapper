@@ -1,11 +1,14 @@
 """Model for Masked Language Modeling."""
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import pytorch_lightning as pl
 import torch.optim as optim
 from loguru import logger
 from torch import Tensor
-from transformers import AutoConfig, AutoModelForMaskedLM
+from transformers import (
+    AutoConfig,
+    AutoModelForMaskedLM
+)
 
 
 class EnzymaticReactionLightningModule(pl.LightningModule):
@@ -15,6 +18,8 @@ class EnzymaticReactionLightningModule(pl.LightningModule):
         self,
         model_args: Dict[str, Any],
         model_architecture: Dict[str, Any],
+        from_albert: Optional[bool] = False,
+        from_bert: Optional[bool] = False,
     ) -> None:
         """
         Construct an EnzymaticReaction lightning module.
@@ -32,9 +37,21 @@ class EnzymaticReactionLightningModule(pl.LightningModule):
             )
             self.model = AutoModelForMaskedLM.from_pretrained(model_args["model"])
         else:
-            self.config = AutoConfig.from_pretrained(
-                model_args["model"], **model_architecture
-            )
+            if from_albert:
+                self.config = AutoConfig.from_pretrained(
+                    "Rostlab/prot_albert", **model_architecture
+                )
+
+            elif from_bert:
+                self.config = AutoConfig.from_pretrained(
+                    "Rostlab/prot_bert", **model_architecture
+                )
+
+            else:
+                self.config = AutoConfig.from_pretrained(
+                    model_args["model"], **model_architecture
+                )
+
             self.model = AutoModelForMaskedLM.from_config(self.config)
 
     def forward(self, x: Tensor) -> Tensor:  # type:ignore

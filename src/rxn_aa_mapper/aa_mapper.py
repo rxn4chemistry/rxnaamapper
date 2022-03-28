@@ -24,7 +24,7 @@ from .rxn_utils import (
     pairwise_levenshtein,
     process_reaction,
 )
-from .tokenization import EnzymaticReactionBertTokenizer
+from .tokenization import MLMEnzymaticReactionTokenizer
 
 
 class RXNAAMapper:
@@ -65,7 +65,7 @@ class RXNAAMapper:
         """
         Load transformer and tokenizer model.
         """
-        self.tokenizer = EnzymaticReactionBertTokenizer(
+        self.tokenizer = MLMEnzymaticReactionTokenizer(
             self.vocabulary_file, self.aa_sequence_tokenizer_filepath
         )
         self.config_model = AutoConfig.from_pretrained(
