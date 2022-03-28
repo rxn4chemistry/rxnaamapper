@@ -35,6 +35,14 @@ tokenizer.tokenize("NC(=O)c1ccc[n+]([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C
 
 ## train the model
 
+We use WandB for logging, if you don't have a mode configured you can simply disable it by setting:
+
+```console
+export WANDB_MODE=offline
+```
+
+Besides using an env variable, you can even create a custom script configuring the logging within it.
+
 The [`mlm-trainer`](./bin/mlm-trainer) script can be used to train a model via MTL:
 
 ```console
@@ -58,6 +66,7 @@ checkpoint-to-hf-model /path/to/model.ckpt /tmp/rxnaamapper-pretrained-model ./e
 
 The trained model can used to map reactant atoms to AA sequence locations that potentially represent the active site.
 
+
 ```python
 from rxn_aa_mapper.aa_mapper import RXNAAMapper
 
@@ -72,6 +81,7 @@ config_mapper = {
 mapper = RXNAAMapper(config=config_mapper)
 mapper.get_reactant_aa_sequence_attention_guided_maps(["NC(=O)c1ccc[n+]([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C@@H](n4cnc5c(N)ncnc54)[C@H](O)[C@@H]3O)[C@@H](O)[C@H]2O)c1.O=C([O-])CC(C(=O)[O-])C(O)C(=O)[O-]|AGGVKTVTLIPGDGIGPEISAAVMKIFDAAKAPIQANVRPCVSIEGYKFNEMYLDTVCLNIETACFATIKCSDFTEEICREVAENCKDIK>>O=C([O-])CCC(=O)C(=O)[O-]"])
 ```
+*NOTE:* The model path contains both the model binary file and the config.json. The files in this folder are generated from the model trained turned into an HuggingFace model using the script from the previous section.
 
 ## citation
 
