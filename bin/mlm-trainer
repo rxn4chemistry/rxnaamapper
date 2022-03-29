@@ -28,9 +28,6 @@ from rxn_aa_mapper.training import train
 @click.argument(
     "aa_sequence_tokenizer_filepath", type=click.Path(exists=False), required=False
 )
-@click.argument(
-    "from_bert_or_albert", type=str, required=False
-)
 
 def main(
     train_dataset_dir: str,
@@ -43,7 +40,6 @@ def main(
     train_organic_dataset_dir: str = None,
     val_organic_dataset_dir: str = None,
     aa_sequence_tokenizer_filepath: str = None,
-    from_bert_or_albert: str = None
 ) -> None:
     """Train a model via masked language modeling."""
     with open(config_file) as fp:
@@ -76,10 +72,6 @@ def main(
     del model_args["architecture"]
 
     dataset_args["num_dataloader_workers"] = min(processes, os.cpu_count())
-    if from_bert_or_albert=="from_albert":
-        dataset_args["from_albert"] = "True"
-    if from_bert_or_albert=="from_bert":
-        dataset_args["from_bert"] = "True"
     dataset_args = {
         **dataset_args,
         **{

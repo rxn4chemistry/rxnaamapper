@@ -1,15 +1,63 @@
 """Model for Masked Language Modeling."""
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, cast, Union
 
 import pytorch_lightning as pl
 import torch.optim as optim
 from loguru import logger
 from torch import Tensor
 from transformers import (
+    AlbertConfig,
+    AlbertForMaskedLM,
     AutoConfig,
-    AutoModelForMaskedLM
+    AutoModelForMaskedLM,
+    BertConfig,
+    BertForMaskedLM,
 )
 
+
+class LoadModel:
+    """Laod an Albert model"""
+
+    def __init__(
+        self,
+        model_name: str = None,
+        model_class: List[Any] = None,
+        model_architecture: Dict[str, Any] = None,
+    ) -> None:
+        """
+        Based on the path, load the model.
+
+        Args:
+            model_args: a dictionary object containing all the necessary arguments for the model creation.
+            model_class: a dictionary object containing the transformer classes to call.
+            model_architecture: a dictionary containing all the information related to the architecture of the model.
+        """
+
+        self.model_name = model_name
+        self.model_architecture = model_architecture
+        model_class = cast(List[Any], model_class)
+        self.Config = model_class[0]
+        self.MaskedLM = model_class[1]
+
+    def get_model(self) -> None:
+        """Give back the model.
+
+        Returns:
+            a Hugginface model.
+        """
+        self.config = self.Config.from_pretrained(
+            self.model_name, **self.model_architecture
+        )
+
+        self.model = self.MaskedLM(self.config)
+
+        return self.model
+
+
+MODEL_CLASS = {
+    "albert": [AlbertConfig, AlbertForMaskedLM],
+    "bert": [BertConfig, BertForMaskedLM],
+}
 
 class EnzymaticReactionLightningModule(pl.LightningModule):
     """Pytorch lightning model for MLM training on enzymatic reactions."""
@@ -17,9 +65,7 @@ class EnzymaticReactionLightningModule(pl.LightningModule):
     def __init__(
         self,
         model_args: Dict[str, Any],
-        model_architecture: Dict[str, Any],
-        from_albert: Optional[bool] = False,
-        from_bert: Optional[bool] = False,
+        # model_architecture: Dict[str, Any]
     ) -> None:
         """
         Construct an EnzymaticReaction lightning module.
@@ -30,6 +76,8 @@ class EnzymaticReactionLightningModule(pl.LightningModule):
         """
         super().__init__()
         self.model_args = model_args
+        self.model_architecture = model_args.get("architecture", {})
+
         resume = self.model_args.get("resume-training", False)
         if resume:
             logger.info(
@@ -37,22 +85,23 @@ class EnzymaticReactionLightningModule(pl.LightningModule):
             )
             self.model = AutoModelForMaskedLM.from_pretrained(model_args["model"])
         else:
-            if from_albert:
-                self.config = AutoConfig.from_pretrained(
-                    "Rostlab/prot_albert", **model_architecture
+            if "albert" == model_args["model"].split("_")[-1]:
+                self.model = LoadModel(
+                    model_args["model"], MODEL_CLASS.get("albert"), self.model_architecture
                 )
+                self.model = self.model.get_model()
 
-            elif from_bert:
-                self.config = AutoConfig.from_pretrained(
-                    "Rostlab/prot_bert", **model_architecture
+            elif "bert" == model_args["model"].split("_")[-1]:
+                self.model = LoadModel(
+                    model_args["model"], MODEL_CLASS.get("bert"), self.model_architecture
                 )
+                self.model = self.model.get_model()
 
             else:
                 self.config = AutoConfig.from_pretrained(
-                    model_args["model"], **model_architecture
+                    model_args["model"], **self.model_architecture
                 )
-
-            self.model = AutoModelForMaskedLM.from_config(self.config)
+                self.model = AutoModelForMaskedLM.from_config(self.config)
 
     def forward(self, x: Tensor) -> Tensor:  # type:ignore
         """

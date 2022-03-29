@@ -1,6 +1,6 @@
 {
     "model" : {
-        "model" : "albert-base-v2",
+        "model" : "Rostlab/prot_albert",
         "lr" : 1e-4,
         "lr_decay" : 0.1,
         "patience" : 5,

@@ -1,4 +1,4 @@
-name: rxn_aa_mapper2
+name: rxn_aa_mapper
 dependencies:
   - python>=3.7,<3.8
   - pip>=19.1,<20.3

@@ -40,12 +40,7 @@ class RegexTokenizer:
 class AASequenceTokenizer:
     """Run AA sequence tokenization."""
 
-    def __init__(
-        self,
-        tokenizer_filepath: str,
-        from_bert: Optional[bool] = False,
-        from_albert: Optional[bool] = False,
-    ) -> None:
+    def __init__(self, tokenizer_filepath: str) -> None:
         """
         Constructs an AASequenceTokenizer.
 
@@ -53,14 +48,12 @@ class AASequenceTokenizer:
             tokenizer_filepath: path to a serialized AA sequence tokenizer.
         """
         self.tokenizer_filepath = tokenizer_filepath
-        self.from_bert = from_bert
-        self.from_albert = from_albert
 
-        if from_bert:
+        if "bert" == tokenizer_filepath.split("_")[-1]:
             self.tokenizer = BertTokenizer.from_pretrained(
                 tokenizer_filepath, do_lower_case=False
             )
-        elif from_albert:
+        elif "albert" == tokenizer_filepath.split("_")[-1]:
             self.tokenizer = AlbertTokenizer.from_pretrained(
                 tokenizer_filepath, do_lower_case=False
             )
@@ -76,7 +69,7 @@ class AASequenceTokenizer:
         Returns:
             extracted tokens.
         """
-        if self.from_albert or self.from_bert:
+        if "bert" or "albert" == self.tokenizer_filepath.split("_")[-1]:
             return self.tokenizer.tokenize(" ".join(list(text)))
         else:
             return self.tokenizer.encode(text).tokens
@@ -90,8 +83,6 @@ class EnzymaticReactionTokenizer:
         aa_sequence_tokenizer_filepath: Optional[str] = None,
         smiles_aa_sequence_separator: str = "|",
         reaction_separator: str = ">>",
-        from_bert: Optional[bool] = False,
-        from_albert: Optional[bool] = False,
     ) -> None:
         """Constructs an EnzymaticReactionTokenizer.
 
@@ -101,8 +92,6 @@ class EnzymaticReactionTokenizer:
             reaction_separator: reaction sides separator. Defaults to ">>".
         """
         # define tokenization utilities
-        self.from_bert = from_bert
-        self.from_albert = from_albert
 
         self.smiles_tokenizer = RegexTokenizer(
             regex_pattern=SMILES_TOKENIZER_PATTERN, suffix="_"
@@ -150,16 +139,14 @@ class EnzymaticReactionTokenizer:
         """
         if self.aa_sequence_tokenizer_filepath is not None:
             fn = AASequenceTokenizer(
-                tokenizer_filepath=self.aa_sequence_tokenizer_filepath,
-                from_albert=self.from_albert,
-                from_bert=self.from_bert,
+                tokenizer_filepath=self.aa_sequence_tokenizer_filepath
             ).tokenize
             return fn
         else:
             return list
 
 
-class MLMEnzymaticReactionTokenizer(BertTokenizer):
+class LMEnzymaticReactionTokenizer(BertTokenizer):
     """
     Constructs a EnzymaticReactionBertTokenizer.
     Adapted from https://github.com/huggingface/transformers
@@ -179,8 +166,6 @@ class MLMEnzymaticReactionTokenizer(BertTokenizer):
         mask_token: str = "[MASK]",
         smiles_aa_sequence_separator: str = "|",
         reaction_separator: str = ">>",
-        from_bert: Optional[bool] = False,
-        from_albert: Optional[bool] = False,
         **kwargs,
     ) -> None:
         """Constructs an ExpressionTokenizer.
@@ -212,8 +197,6 @@ class MLMEnzymaticReactionTokenizer(BertTokenizer):
             aa_sequence_tokenizer_filepath=aa_sequence_tokenizer_filepath,
             smiles_aa_sequence_separator=smiles_aa_sequence_separator,
             reaction_separator=reaction_separator,
-            from_bert=from_bert,
-            from_albert=from_albert,
         )
 
     @property

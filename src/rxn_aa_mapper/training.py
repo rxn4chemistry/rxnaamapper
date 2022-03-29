@@ -1,6 +1,6 @@
 """Training utilities."""
 import os
-from typing import Any, Dict, Union, cast, Optional
+from typing import Any, Dict, Union
 
 import pytorch_lightning as pl
 import torch
@@ -23,10 +23,8 @@ def get_data_module(
 ) -> EnzymaticReactionLightningDataModule:
     """
     Get a data module for enzymatic reactions.
-
     Args:
         dataset_args: dictionary containing all the necessary parameters for the dataset creation.
-
     Returns:
         data module for enzymatic reactions.
     """
@@ -46,26 +44,16 @@ def train(
 ) -> None:
     """
     Train a model.
-
     Args:
         model_args: dictionary containing all the parameters for the mode configuration.
         model_architecture: dictionary containing the information related to the architecture of the model.
         dataset_args: dictionary containing all the necessary parameters for the dataset creation.
         training_args: dictionary containing all the necessary parameters for the training routine.
     """
-
-    from_albert = dataset_args.get("from_albert", False)
-    from_albert = cast(bool, from_albert)
-
-    from_bert = dataset_args.get("from_bert", False)
-    from_bert = cast(bool, from_bert)
-
-
     data_module = get_data_module(dataset_args)
     model_architecture["vocab_size"] = data_module.train_dataset.tokenizer.vocab_size
-    model = EnzymaticReactionLightningModule(
-        model_args, model_architecture, from_albert=from_albert, from_bert=from_bert
-    )
+    model = EnzymaticReactionLightningModule(model_args)
+    model.model.resize_token_embeddings(model_architecture["vocab_size"])
 
     log_dir = trainer_args["log_dir"]
     os.makedirs(log_dir, exist_ok=True)
@@ -115,12 +103,10 @@ def checkpoint_to_module(
 ) -> EnzymaticReactionLightningModule:
     """
     Transform a checkpoint into a module.
-
     Args:
         input_checkpoint: model checkpoint.
         model_args: dictionary containing all the parameters for the mode configuration.
         model_architecture: dictionary containing the information related to the architecture of the model.
-
     Returns:
         the ligthining module.
     """
