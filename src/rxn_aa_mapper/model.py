@@ -1,5 +1,5 @@
 """Model for Masked Language Modeling."""
-from typing import Any, Dict, List, cast, Union
+from typing import Any, Dict, List, cast
 
 import pytorch_lightning as pl
 import torch.optim as optim
@@ -15,7 +15,7 @@ from transformers import (
 )
 
 
-class LoadModel:
+class ModelLoader:
     """Laod an Albert model"""
 
     def __init__(
@@ -28,15 +28,15 @@ class LoadModel:
         Based on the path, load the model.
 
         Args:
-            model_args: a dictionary object containing all the necessary arguments for the model creation.
-            model_class: a dictionary object containing the transformer classes to call.
+            model_name: a string containing the name of the model.
+            model_class: a list containing the transformer classes to call.
             model_architecture: a dictionary containing all the information related to the architecture of the model.
         """
 
         self.model_name = model_name
         self.model_architecture = model_architecture
         model_class = cast(List[Any], model_class)
-        self.Config = model_class[0]
+        self.configuration = model_class[0]
         self.MaskedLM = model_class[1]
 
     def get_model(self) -> None:
@@ -45,13 +45,13 @@ class LoadModel:
         Returns:
             a Hugginface model.
         """
-        self.config = self.Config.from_pretrained(
+        self.config = self.configuration.from_pretrained(
             self.model_name, **self.model_architecture
         )
 
-        self.model = self.MaskedLM(self.config)
+        model = self.MaskedLM(self.config)
 
-        return self.model
+        return model
 
 
 MODEL_CLASS = {
@@ -59,20 +59,19 @@ MODEL_CLASS = {
     "bert": [BertConfig, BertForMaskedLM],
 }
 
+
 class EnzymaticReactionLightningModule(pl.LightningModule):
     """Pytorch lightning model for MLM training on enzymatic reactions."""
 
     def __init__(
         self,
         model_args: Dict[str, Any],
-        # model_architecture: Dict[str, Any]
     ) -> None:
         """
         Construct an EnzymaticReaction lightning module.
 
         Args:
             model_args: a dictionary object containing all the necessary arguments for the model creation.
-            model_architecture: a dictionary containing all the information related to the architecture of the model.
         """
         super().__init__()
         self.model_args = model_args
@@ -85,15 +84,22 @@ class EnzymaticReactionLightningModule(pl.LightningModule):
             )
             self.model = AutoModelForMaskedLM.from_pretrained(model_args["model"])
         else:
-            if "albert" == model_args["model"].split("_")[-1]:
-                self.model = LoadModel(
-                    model_args["model"], MODEL_CLASS.get("albert"), self.model_architecture
+            if "albert" in model_args["model"].lower():
+                self.model = ModelLoader(
+                    model_args["model"],
+                    MODEL_CLASS.get("albert"),
+                    self.model_architecture,
                 )
                 self.model = self.model.get_model()
 
-            elif "bert" == model_args["model"].split("_")[-1]:
-                self.model = LoadModel(
-                    model_args["model"], MODEL_CLASS.get("bert"), self.model_architecture
+            elif (
+                "albert" not in model_args["model"].lower()
+                and "bert" in model_args["model"].lower()
+            ):
+                self.model = ModelLoader(
+                    model_args["model"],
+                    MODEL_CLASS.get("bert"),
+                    self.model_architecture,
                 )
                 self.model = self.model.get_model()
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Masked Modeling Language Training script."""
 
-from email.policy import default
 import json
 import os
 import sys

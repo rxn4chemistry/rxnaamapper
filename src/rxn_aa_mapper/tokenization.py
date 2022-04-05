@@ -49,11 +49,14 @@ class AASequenceTokenizer:
         """
         self.tokenizer_filepath = tokenizer_filepath
 
-        if "bert" == tokenizer_filepath.split("_")[-1]:
+        if (
+            "albert" not in tokenizer_filepath.lower()
+            and "bert" in tokenizer_filepath.lower()
+        ):
             self.tokenizer = BertTokenizer.from_pretrained(
                 tokenizer_filepath, do_lower_case=False
             )
-        elif "albert" == tokenizer_filepath.split("_")[-1]:
+        elif "albert" in tokenizer_filepath.lower():
             self.tokenizer = AlbertTokenizer.from_pretrained(
                 tokenizer_filepath, do_lower_case=False
             )
