@@ -15,7 +15,7 @@ from tqdm import tqdm
 from transformers import DataCollatorForLanguageModeling
 
 from .collator import NGramDataCollatorForLanguageModeling
-from .tokenization import EnzymaticReactionBertTokenizer
+from .tokenization import LMEnzymaticReactionTokenizer
 
 
 class EnzymaticReactionDataset(IterableDataset):
@@ -38,9 +38,13 @@ class EnzymaticReactionDataset(IterableDataset):
         aa_sequence_tokenizer_filepath = dataset_args.get(
             "aa_sequence_tokenizer_filepath", None
         )
-        self.tokenizer = EnzymaticReactionBertTokenizer(
+        aa_sequence_tokenizer_type = dataset_args.get(
+            "aa_sequence_tokenizer_type", "generic"
+        )
+        self.tokenizer = LMEnzymaticReactionTokenizer(
             dataset_args["vocabulary_file"],
             aa_sequence_tokenizer_filepath,
+            aa_sequence_tokenizer_type,
         )
 
         if stage == "train":
@@ -195,7 +199,7 @@ class EnzymaticReactionDataset(IterableDataset):
     def filter_tokenized_reactions_by_length(
         cls,
         data: pd.DataFrame,
-        tokenizer: EnzymaticReactionBertTokenizer,
+        tokenizer: LMEnzymaticReactionTokenizer,
         max_length_token: int,
     ) -> pd.DataFrame:
         """Filter rtokenized reactions by length.
@@ -220,7 +224,7 @@ class EnzymaticReactionDataset(IterableDataset):
     @classmethod
     def filter_and_save_tokenized_reactions_by_length(
         cls,
-        tokenizer: EnzymaticReactionBertTokenizer,
+        tokenizer: LMEnzymaticReactionTokenizer,
         input_folder: str,
         output_folder: str,
         max_length_token: int = 512,

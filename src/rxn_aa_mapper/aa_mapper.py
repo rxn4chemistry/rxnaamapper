@@ -24,7 +24,7 @@ from .rxn_utils import (
     pairwise_levenshtein,
     process_reaction,
 )
-from .tokenization import EnzymaticReactionBertTokenizer
+from .tokenization import LMEnzymaticReactionTokenizer
 
 
 class RXNAAMapper:
@@ -58,6 +58,9 @@ class RXNAAMapper:
         self.aa_sequence_tokenizer_filepath = config.get(
             "aa_sequence_tokenizer_filepath", None
         )
+        self.aa_sequence_tokenizer_type = config.get(
+            "aa_sequence_tokenizer_type", "generic"
+        )
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self._load_model_tokenizer()
 
@@ -65,8 +68,10 @@ class RXNAAMapper:
         """
         Load transformer and tokenizer model.
         """
-        self.tokenizer = EnzymaticReactionBertTokenizer(
-            self.vocabulary_file, self.aa_sequence_tokenizer_filepath
+        self.tokenizer = LMEnzymaticReactionTokenizer(
+            self.vocabulary_file,
+            self.aa_sequence_tokenizer_filepath,
+            self.aa_sequence_tokenizer_type,
         )
         self.config_model = AutoConfig.from_pretrained(
             self.model_path,

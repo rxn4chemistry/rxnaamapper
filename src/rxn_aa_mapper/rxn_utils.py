@@ -359,7 +359,6 @@ def encode_aa_sequence_indices(indices: List[int]) -> str:
     """Encode the list of aa_sequence token indices in a unique number in the basis `prime`
     Args:
         indices: list of aa_sequence tokens
-
     Returns:
         unique number cast into string
     """

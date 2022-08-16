@@ -4,13 +4,8 @@ import json
 
 import click
 
-from rxn_aa_mapper.tokenization import EnzymaticReactionBertTokenizer
+from rxn_aa_mapper.tokenization import LMEnzymaticReactionTokenizer
 from rxn_aa_mapper.training import checkpoint_to_module
-
-tokenizer = EnzymaticReactionBertTokenizer(
-    vocabulary_file="./examples/vocabulary_token_75K_min_600_max_750_500K.txt",
-    aa_sequence_tokenizer_filepath="./examples/token_75K_min_600_max_750_500K.json",
-)
 
 
 @click.command()
@@ -18,22 +13,24 @@ tokenizer = EnzymaticReactionBertTokenizer(
 @click.argument("output_save_path", type=click.Path())
 @click.argument("vocabulary_file", type=click.Path(exists=True))
 @click.argument("config_file", type=click.Path(exists=True))
-@click.argument("aa_sequence_tokenizer_filepath", type=click.Path(exists=True))
+@click.argument("aa_sequence_tokenizer_filepath", type=click.Path(exists=False))
+@click.argument("aa_sequence_tokenizer_type", type=click.STRING)
 def main(
     input_checkpoint: str,
     output_save_path: str,
     vocabulary_file: str,
     config_file: str,
     aa_sequence_tokenizer_filepath: str,
+    aa_sequence_tokenizer_type: str
 ) -> None:
     with open(config_file) as fp:
         config = json.load(fp)
     model_args = config["model"]
     model_architecture = model_args.get("architecture", {})
     del model_args["architecture"]
-    tokenizer = EnzymaticReactionBertTokenizer(
+    tokenizer = LMEnzymaticReactionTokenizer(
         vocabulary_file=vocabulary_file,
-        aa_sequence_tokenizer_filepath=aa_sequence_tokenizer_filepath,
+        aa_sequence_tokenizer_filepath=aa_sequence_tokenizer_filepath, aa_sequence_tokenizer_type=aa_sequence_tokenizer_type
     )
     model_architecture["vocab_size"] = tokenizer.vocab_size
     module = checkpoint_to_module(

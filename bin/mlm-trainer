@@ -25,7 +25,7 @@ from rxn_aa_mapper.training import train
 )
 @click.argument("val_organic_dataset_dir", type=click.Path(exists=True), required=False)
 @click.argument(
-    "aa_sequence_tokenizer_filepath", type=click.Path(exists=True), required=False
+    "aa_sequence_tokenizer_filepath", type=click.Path(exists=False), required=False
 )
 def main(
     train_dataset_dir: str,
@@ -38,6 +38,7 @@ def main(
     train_organic_dataset_dir: str = None,
     val_organic_dataset_dir: str = None,
     aa_sequence_tokenizer_filepath: str = None,
+    aa_sequence_tokenizer_type: str = None
 ) -> None:
     """Train a model via masked language modeling."""
     with open(config_file) as fp:
@@ -77,10 +78,11 @@ def main(
             "val_dataset_dir": val_dataset_dir,
             "vocabulary_file": vocabulary_file,
             "aa_sequence_tokenizer_filepath": aa_sequence_tokenizer_filepath,
+            "aa_sequence_tokenizer_type": aa_sequence_tokenizer_type,
             "pattern": pattern,
             "train_organic_dataset_dir": train_organic_dataset_dir,
             "val_organic_dataset_dir": val_organic_dataset_dir,
-            "dataset_type": dataset_type,
+            "dataset_type": dataset_type
         },
     }
     if "shuffle" not in dataset_args:
