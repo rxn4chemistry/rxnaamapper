@@ -24,11 +24,12 @@ create-enzymatic-reaction-vocabulary ./examples/data-samples/biochemical ./examp
 Using the examples vocabulary and AA tokenizer provided, we can observe the enzymatic reaction tokenizer in action:
 
 ```python
-from rxn_aa_mapper.tokenization import EnzymaticReactionBertTokenizer
+from rxn_aa_mapper.tokenization import LMEnzymaticReactionTokenizer
 
-tokenizer = EnzymaticReactionBertTokenizer(
+tokenizer = LMEnzymaticReactionTokenizer(
     vocabulary_file="./examples/vocabulary_token_75K_min_600_max_750_500K.txt",
-    aa_sequence_tokenizer_filepath="./examples/token_75K_min_600_max_750_500K.json"
+    aa_sequence_tokenizer_filepath="./examples/token_75K_min_600_max_750_500K.json",
+    aa_sequence_tokenizer_type="generic"
 )
 tokenizer.tokenize("NC(=O)c1ccc[n+]([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C@@H](n4cnc5c(N)ncnc54)[C@H](O)[C@@H]3O)[C@@H](O)[C@H]2O)c1.O=C([O-])CC(C(=O)[O-])C(O)C(=O)[O-]|AGGVKTVTLIPGDGIGPEISAAVMKIFDAAKAPIQANVRPCVSIEGYKFNEMYLDTVCLNIETACFATIKCSDFTEEICREVAENCKDIK>>O=C([O-])CCC(=O)C(=O)[O-]")
 ```
@@ -47,11 +48,17 @@ The [`mlm-trainer`](./bin/mlm-trainer) script can be used to train a model via M
 
 ```console
 mlm-trainer \
-    ./examples/data-samples/biochemical ./examples/data-samples/biochemical \  # just a sample, simply split data in a train and a validation folder
-    ./examples/vocabulary_token_75K_min_600_max_750_500K.txt /tmp/mlm-trainer-log \
-    ./examples/sample-config.json "*.csv" 1 \  # for a more realistic config see ./examples/config.json
-    ./examples/data-samples/organic ./examples/data-samples/organic \  # just a sample, simply split data in a train and a validation folder
-    ./examples/token_75K_min_600_max_750_500K.json
+    ./examples/data-samples/biochemical \ # just a sample train folder
+    ./examples/data-samples/biochemical \  # just a sample validation folder
+    ./examples/vocabulary_token_75K_min_600_max_750_500K.txt \
+    /tmp/mlm-trainer-log \
+    ./examples/sample-config.json \ # for a more realistic config see ./examples/config.json
+    "*.csv" \
+    1 \
+    ./examples/data-samples/organic \ # just a sample train folder
+    ./examples/data-samples/organic \  # just a sample validation folder
+    ./examples/token_75K_min_600_max_750_500K.json \
+    "generic"
 ```
 
 Checkpoints will be stored in the `/tmp/mlm-trainer-log` for later usage in identification of active sites.
@@ -73,6 +80,7 @@ from rxn_aa_mapper.aa_mapper import RXNAAMapper
 config_mapper = {
     "vocabulary_file": "./examples/vocabulary_token_75K_min_600_max_750_500K.txt",
     "aa_sequence_tokenizer_filepath": "./examples/token_75K_min_600_max_750_500K.json",
+    "aa_sequence_tokenizer_type": "generic",
     "model_path": "/tmp/rxnaamapper-pretrained-model",
     "head": 3,
     "layers": [11],
