@@ -1,0 +1,11 @@
+loguru
+transformers
+pytorch_lightning
+click
+pandas
+numpy
+wandb
+scipy
+xmltodict
+statsmodels
+biopython
