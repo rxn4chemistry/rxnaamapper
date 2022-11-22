@@ -277,7 +277,7 @@ class RXNAAMapper:
             "false_positive_rate": FP / (FP + TN),
         }
 
-        return output
+        return output 
 
     def get_predicted_active_site(
         self,
