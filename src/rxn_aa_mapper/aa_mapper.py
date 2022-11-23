@@ -21,7 +21,6 @@ from .rxn_utils import (
     NotReactionException,
     decode_aa_sequence_indices,
     generate_atom_mapped_reaction_atoms,
-    pairwise_levenshtein,
     process_reaction,
 )
 from .tokenization import LMEnzymaticReactionTokenizer
@@ -240,7 +239,7 @@ class RXNAAMapper:
         self,
         predicted_tokens: List[Tuple[int, int]],
         ground_truth_token_indices: List[Tuple[int, int]],
-        aa_sequence: Optional[str] = None,
+        aa_sequence: str,
     ) -> Dict[str, Any]:
         """Computer the overlapping score between two lists of interval.
         Args:
@@ -251,69 +250,34 @@ class RXNAAMapper:
         Returns:
             a dictionary the overlap score, the fpr and other metrics.
         """
-        score: float = 0.0
-        penalties = []
-        false_positive_rate: float = 0.0
-        sorted(predicted_tokens, key=lambda item: item[0])
-        sorted(ground_truth_token_indices, key=lambda item: item[0])
-        ground_truth_active_site_length = sum(
-            item[1] - item[0] for item in ground_truth_token_indices
-        )
-        predicted_active_site_length = sum(
-            item[1] - item[0] for item in predicted_tokens
-        )
-        active_tokens, non_active_tokens = [], []
-        while len(predicted_tokens) != 0 and len(ground_truth_token_indices) != 0:
-            item1, item2 = predicted_tokens[0], ground_truth_token_indices[0]
-            if item1[1] < item2[0]:
-                predicted_tokens.pop(0)
-                false_positive_rate += item1[1] - item1[0]
-                non_active_tokens.append(item1)
-                continue
-            if item2[1] < item1[0]:
-                ground_truth_token_indices.pop(0)
-                continue
-            current_score = min(item1[1], item2[1]) - max(item1[0], item2[0])
-            active_tokens.append(item2)
-            if current_score != 0:
-                penalties.append(
-                    (item1[1] - item1[0] - current_score) / (item1[1] - item1[0])
-                )
-            score += current_score
+        lst_pred = []
+        for i, j in predicted_tokens:
+            lst_pred.extend([k for k in range(i, j)])
 
-            if item1[1] < item2[1]:
-                predicted_tokens.pop(0)
-            else:
-                ground_truth_token_indices.pop(0)
-        score /= float(ground_truth_active_site_length)
-        false_positive_rate /= float(predicted_active_site_length)
-        penalty = 0
-        if len(penalties) != 0:
-            penalty = np.mean(penalties)
+        lst_pred = set(lst_pred)
 
-        aa_sequence_token_length = len(
-            self.tokenizer.tokenizer.aa_sequence_tokenizer(aa_sequence)
-        )
-        token_percent = len(predicted_tokens) / aa_sequence_token_length
+        lst_gt = []
+        for i, j in ground_truth_token_indices:
+            lst_gt.extend([k for k in range(i, j)])
+
+        lst_gt = set(lst_gt)
+
+        amino = [i for i in range(len(aa_sequence))]
+
+        TP = len(lst_pred.intersection(lst_gt))
+        FP = len(lst_pred.difference(lst_gt))
+        TN = len(set(amino).difference((lst_gt).union(lst_pred)))
+        # FN = len(lst_gt.difference(lst_pred))
+
+        if (FP + TP) != len(lst_pred):
+            print("there is a mistake in the calculations")
+
         output = {
-            "overlap_score": score,
-            "penalty": penalty,
-            "false_positive_rate": false_positive_rate,
-            "token_percent": token_percent,
+            "overlap_score": TP / len(lst_gt),  # a.k.a. recall = TP / (TP + FN)
+            "false_positive_rate": FP / (FP + TN),
         }
-        if aa_sequence:
-            aa_sequence_string = str(aa_sequence)
-            active_tokens_strings = list(
-                map(lambda it: aa_sequence_string[it[0] : it[1]], active_tokens)
-            )
-            non_active_tokens_strings = list(
-                map(lambda it: aa_sequence_string[it[0] : it[1]], non_active_tokens)
-            )
-            output["levenshtein_score"] = pairwise_levenshtein(
-                active_tokens_strings, non_active_tokens_strings
-            )
 
-        return output
+        return output 
 
     def get_predicted_active_site(
         self,
