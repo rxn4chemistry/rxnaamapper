@@ -1,15 +1,15 @@
-# rxn-aa-mapper
+# RXNAAMapper
 
-Reactions SMILES-AA sequence mapping
+RXNAAMapper is a tool designed to identify binding sites in protein sequences by leveraging language models trained on biochemical reactions. The tool can capture the signal characterizing amino acid (AA) binding sites using linguistic representations for proteins and their molecular substrates, performing unsupervised binding site prediction from protein sequences and reaction SMILES.
 
 ## setup
-
+To set up the environment, use the following commands:
 ```console
 conda env create -f conda.yml
 conda activate rxn_aa_mapper
 ```
 
-In the following we consider on [examples](./examples) provided to show how to use RXNAAMapper.
+In the following we consider the [examples](./examples) provided to show how to use RXNAAMapper.
 
 ## generate a vocabulary to be used with the `EnzymaticReactionBertTokenizer`
 
@@ -21,7 +21,7 @@ create-enzymatic-reaction-vocabulary ./examples/data-samples/biochemical ./examp
 
 ## use the tokenizer
 
-Using the examples vocabulary and AA tokenizer provided, we can observe the enzymatic reaction tokenizer in action:
+The example below shows how to use the `LMEnzymaticReactionTokenizer` with the vocabulary previously created and the tokenizer:
 
 ```python
 from rxn_aa_mapper.tokenization import LMEnzymaticReactionTokenizer
@@ -42,8 +42,6 @@ We use WandB for logging, if you don't have a mode configured you can simply dis
 export WANDB_MODE=offline
 ```
 
-Besides using an env variable, you can even create a custom script configuring the logging within it.
-
 The [`mlm-trainer`](./bin/mlm-trainer) script can be used to train a model via MTL:
 
 ```console
@@ -63,7 +61,7 @@ mlm-trainer \
 
 Checkpoints will be stored in the `/tmp/mlm-trainer-log` for later usage in identification of active sites.
 
-Those can be turned into an HuggingFace model by simply running:
+These checkpoints can be converted into a HuggingFace model with:
 
 ```console
 checkpoint-to-hf-model /path/to/model.ckpt /tmp/rxnaamapper-pretrained-model ./examples/vocabulary_token_75K_min_600_max_750_500K.txt ./examples/sample-config.json ./examples/token_75K_min_600_max_750_500K.json
@@ -71,8 +69,7 @@ checkpoint-to-hf-model /path/to/model.ckpt /tmp/rxnaamapper-pretrained-model ./e
 
 ## predict active site
 
-The trained model can used to map reactant atoms to AA sequence locations that potentially represent the active site.
-
+Once trained, the RXNAAMapper model can predict reactant atoms and map them to AA sequence locations, indicating potential binding sites:
 
 ```python
 from rxn_aa_mapper.aa_mapper import RXNAAMapper
@@ -89,15 +86,18 @@ config_mapper = {
 mapper = RXNAAMapper(config=config_mapper)
 mapper.get_reactant_aa_sequence_attention_guided_maps(["NC(=O)c1ccc[n+]([C@@H]2O[C@H](COP(=O)(O)OP(=O)(O)OC[C@H]3O[C@@H](n4cnc5c(N)ncnc54)[C@H](O)[C@@H]3O)[C@@H](O)[C@H]2O)c1.O=C([O-])CC(C(=O)[O-])C(O)C(=O)[O-]|AGGVKTVTLIPGDGIGPEISAAVMKIFDAAKAPIQANVRPCVSIEGYKFNEMYLDTVCLNIETACFATIKCSDFTEEICREVAENCKDIK>>O=C([O-])CCC(=O)C(=O)[O-]"])
 ```
-*NOTE:* The model path contains both the model binary file and the config.json. The files in this folder are generated from the model trained turned into an HuggingFace model using the script from the previous section.
+*NOTE:* The model path should contain both the model binary file and the config.json. These files are generated from the model trained and converted to a HuggingFace model using the script provided in the previous section.
 
 ## citation
 
 ```bib
-@article{dassi2021identification,
-  title={Identification of Enzymatic Active Sites with Unsupervised Language Modeling},
-  author={Dassi, Lo{\"\i}c Kwate and Manica, Matteo and Probst, Daniel and Schwaller, Philippe and Teukam, Yves Gaetan Nana and Laino, Teodoro},
-  year={2021}
-  conference={AI for Science: Mind the Gaps at NeurIPS 2021, ELLIS Machine Learning for Molecule Discovery Workshop 2021}
+@article{teukam2024language,
+  title={Language models can identify enzymatic binding sites in protein sequences},
+  author={Teukam, Yves Gaetan Nana and Dassi, Lo{\"\i}c Kwate and Manica, Matteo and Probst, Daniel and Schwaller, Philippe and Laino, Teodoro},
+  journal={Computational and Structural Biotechnology Journal},
+  volume={23},
+  pages={1929--1937},
+  year={2024},
+  publisher={Elsevier}
 }
 ```
