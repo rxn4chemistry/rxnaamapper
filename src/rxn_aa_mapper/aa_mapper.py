@@ -46,7 +46,6 @@ class RXNAAMapper:
             config: Config dict, leave it empty to have the official rxnmapper.
         """
 
-        # Config takes "model_path", "vocabulary_file", "aa_sequence_tokenizer_filepath", "model_type", "attention_multiplier", "head", "layers"
         self.model_path = config["model_path"]
         self.attention_multiplier = config.get("attention_multiplier", 90.0)
         self.head = config.get("head", 2)
@@ -155,7 +154,7 @@ class RXNAAMapper:
                 )
             except Exception:
                 raise NotReactionException(
-                    f"{rxn}. Unpected reaction format, the expected format is `reactant[|aa_sequence]{1}>>products`"
+                    f"{rxn}. Unpected reaction format, the expected format is `reactants|aa_sequence>>products`"
                 )
         return output
 
@@ -267,13 +266,12 @@ class RXNAAMapper:
         TP = len(lst_pred.intersection(lst_gt))
         FP = len(lst_pred.difference(lst_gt))
         TN = len(set(amino).difference((lst_gt).union(lst_pred)))
-        # FN = len(lst_gt.difference(lst_pred))
 
         if (FP + TP) != len(lst_pred):
             print("there is a mistake in the calculations")
 
         output = {
-            "overlap_score": TP / len(lst_gt),  # a.k.a. recall = TP / (TP + FN)
+            "overlap_score": TP / len(lst_gt),
             "false_positive_rate": FP / (FP + TN),
         }
 
@@ -342,8 +340,7 @@ class RXNAAMapper:
             (precursor_tokens.index(smiles_aa_sequence_separator) + 1) :
         ]
         predicted_site_indices = []
-        # The same token could appear as an activite site in multiple places in the protein
-        # the method `str.find` will only pick the first occurence and the method `str.findall` could include the non active site
+
         cumulative_index = 0
         for i, token in enumerate(aa_sequence_tokens):
             if (i + 1) in filtered_sites:
